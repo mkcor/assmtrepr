@@ -1,0 +1,284 @@
+---
+title: "An attempt at reproducing the Software Carpentry Workshop Evaluation (2012)"
+author: "Marianne Corvellec"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{An attempt at reproducing the Software Carpentry Workshop Evaluation (2012)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+# Display options.
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+## Reproducibility
+
+Let us call the utility function `sessionInfo()` to print information about the
+version of R we are running, the OS we are running, and the R packages we have
+attached or loaded (see next section for a quick explanation).
+
+```{r}
+sessionInfo()
+```
+
+
+## Data Science with R
+
+This [community of practice](https://en.wikipedia.org/wiki/Community_of_practice)
+is very much fuelled by the talent and generosity of Hadley Wickham. For
+reference, here are some recent resources:
+
+* [Website for book "R for Data Science"](http://r4ds.had.co.nz/)
+* [Tutorial video (October 10, 2016)](https://www.youtube.com/watch?v=K-ss_ag2k9E)
+* [Presentation video (November 18, 2016)](https://www.youtube.com/watch?v=cU0-NrUxRw4)
+
+In a data science project, the first line of R code you would want to write and
+run is
+
+```{r}
+library(tidyverse)
+```
+
+The [tidyverse](https://blog.rstudio.org/2016/09/15/tidyverse-1-0-0/) is a
+collection of R packages best suited for data exploration and analysis.
+Metonymically, we call 'tidyverse' the community of practice around it. The
+tidyverse leverages the expressive power of functional programming, which we try
+to showcase in this notebook.
+
+The previous line of code loads and attaches six packages (as the output reads).
+We can check this by re-running
+
+```{r}
+sessionInfo()
+```
+
+When a package is *attached*, we can call one of its functions directly. For
+example, we can call `filter()` from package `dplyr`.
+
+```{r}
+filter(iris, Species == "setosa")
+```
+
+We were warned just earlier of a conflict: base package `stats` also has a
+function named `filter()`. If we wanted to make sure that we are actually
+calling the `filter()` function from `dplyr`, we would use the following syntax:
+
+```{r}
+dplyr::filter(iris, Species == "setosa")
+```
+
+This is a best practice. Indeed, we may end up copying and pasting this piece of
+code elsewhere, where package imports are done in a different order...
+
+When a package is simply *loaded* (and not attached), we have to prefix its
+functions with the package name to call them. For example,
+
+```{r}
+assertthat::are_equal(0, 0.0)
+```
+
+
+## Original Analysis
+
+The original analysis can be found under
+https://drive.google.com/drive/folders/0BwPcvCxHVNBESlRfU3hmU0tsZkE
+(file 'SoftwareCarpentry-Workshop-Evaluation.pdf').
+
+Let us take a close look at the numbers in Table 1. The first paragraph of text
+reads that 56 people were involved in the study (whether they took the
+pre-workshop survey, the post-workshop survey, or both). A naive interpretation
+of the column names (Table 1) suggests that this number can be recovered by
+adding up all three numbers ('Pre only', 'Post only', 'Both Pre and Post'). But
+this is not the case; e.g., we would have
+
+```{r}
+36 + 34 + 30
+```
+
+people for Michigan State University (MSU) alone... So it must be that 'Pre
+only' (resp. 'Post only') does not mean "number of people who took *only* the
+pre-workshop (resp. post-workshop) survey". Instead, it must be the total count
+of people who took the pre-workshop (resp. post-workshop) survey, whether they
+later (resp. first) took the post-workshop (resp. pre-workshop) survey as well
+or not.
+
+In this work, our first goal is to confirm the meaning of these column names. To
+meet this goal, we reanalyze data to figure out which counts 36, 34, etc.
+correspond to.
+
+The raw data were communicated by Julie Libarkin via Titus Brown (Excel file
+with four tabs, named: `PRE`, `POST`, `PRESPSS`, `POSTSPSS`). We exported the
+`POSTSPSS` tab into a .csv file (for reference, Data Carpentry
+[lesson](http://www.datacarpentry.org/spreadsheet-ecology-lesson/05-exporting-data.htm). We renamed the file 'Software_Carpentry_SPSS_2012.csv'. We used LibreOffice,
+keeping the default settings except for "cell formulas instead of calculated
+values" (checked). The reasoning was that formulas would be easy to spot, so we
+can later discard them, and recalculate them. So this should be helpful when
+cleaning up and analyzing the data.
+
+**TODO** Look up a way to do this export in the command line, to come up with a
+more robust reproducible workflow.
+
+
+## Data loading
+
+Without further ado, let us load and attach our embryonic package:
+
+```{r}
+library(assmtrepr)
+```
+
+For now, this package does not come with any function... It only contains a
+dataset (the above mentioned .csv export). Where can we find it?
+
+```{r}
+data_path <- system.file("extdata", "Software_Carpentry_SPSS_2012.csv",
+                         package = "assmtrepr")
+```
+
+We can load this dataset with function `read_csv()` from `readr`. Let us retain
+the name of the exported tab in the variable name:
+
+```{r}
+postspss <- readr::read_csv(data_path)
+```
+
+Let us get a feel for our data.
+
+```{r}
+postspss
+```
+
+A [tibble](https://blog.rstudio.org/2016/03/24/tibble-1-0-0/) is a data
+frame-like object. It comes with a neat print method (as you can see above).
+
+Uh oh, some column names look unsafe... You would expect whitespaces to be
+handled properly, but sometimes you run into
+[issues](https://github.com/tidyverse/tidyr/issues/244). Also, in R, the dollar
+sign means something: It lets you access variables in a table (see above link on
+'tibble'). So, really, variable name `$ cat hashbang` looks very unsafe.
+
+## Data cleaning
+
+What are all the column names?
+
+```{r}
+names(postspss)
+```
+
+Let us make all variable names syntactically valid, by calling the following
+function from base R (the `base` package, if you like):
+
+```{r}
+names(postspss) <- make.names(names(postspss), unique=TRUE)
+names(postspss)
+```
+
+Dots have replaced all special characters, because `.` is not syntactically
+meaningful in R, although it is used within some conventions of certain
+object-oriented systems (skip for now and for our purposes). Suffice it to say
+that, in the tidyverse, we want to be safer and stricter, so we will replace
+these dots with underscores:
+
+```{r}
+names(postspss) <- gsub("\\.", "_", names(postspss))
+names(postspss)
+```
+
+(The double backslashes are about escaping characters which have a special
+meaning in
+[regular expressions](https://en.wikipedia.org/wiki/Regular_expression), in this
+case, the dot).
+
+**Note** We have used 'column name' and 'variable name' interchangeably.
+Actually, a column is a variable only if the data are tidy. So, first, we should
+ensure that each column is indeed a variable. If not, we should do the necessary
+data wrangling.
+
+Is there any empty column?
+
+In R, the base function `is.na()` indicates whether an element is missing (or
+null, although there is a difference, that we shall skip for now). For example,
+
+```{r}
+is.na(NA)
+is.na(NaN)
+is.na(0)
+is.na("hola")
+```
+
+We shall use function `map()` (from `purrr`) to apply this function to all the
+elements of our tibble: `map(postspss, is.na)`. Since, the output is large, let
+us print only the first three elements:
+
+```{r}
+head(map(postspss, is.na), n = 3)
+```
+
+We are interested in those variables (columns) for which all elements are null
+(empty columns). So we want to run: `map(map(postspss, is.na), all)`. This
+nesting of functions must remind you of the mathematical style of function
+composition. We can rewrite it in a piping style, which is more readable and
+follows the order in which operations are performed:
+
+```{r}
+postspss %>%      # Take our dataset,
+  map(is.na) %>%  # pass it to function map() with argument is.na,
+  map(all) %>%    # pass the result to map() with argument all,
+  head()          # and only output the first six elements.
+```
+
+The pipe operator `%>%` comes with the `dplyr` package. Since `names(postspss)`
+is a vector, we would like to get a vector, not a list. Looking up the
+[docs](https://github.com/hadley/purrr#transformation) for `purrr`, we happily
+find the `map_lgl()` function.
+
+```{r}
+empty_col <- postspss %>%
+  map(is.na) %>%
+  map_lgl(all)
+
+empty_col %>%
+  head()
+```
+
+Let us check that they are all non-empty:
+
+```{r}
+which(empty_col)
+```
+
+As you now know, we could have run `empty_col %>% which()` alternatively. Since
+we do not have empty columns, we will have to wait to showcase
+`postspss %>% select(...)` or `postspss %>% select_(...)` for column selection.
+
+Is there any empty row?
+
+```{r}
+postspss %>%
+  transpose() %>%
+  map(is.na) %>%
+  map_lgl(all) %>%
+  which()
+```
+
+No. Again, we will have to wait to showcase `postspss %>% filter(...)` for row
+selection.
+
+## Split-Apply-Combine
+
+Reference: https://www.jstatsoft.org/article/view/v040i01/
+
+```{r}
+postspss %>%
+  group_by(Location) %>%
+  tally()
+```
+
+So, *assuming* each row is an observation (which is the case in tidy data) and
+each observation is a person who participated in the survey, we have 40 people
+from MSU and 17 from UTA, which totals 57 (not 56).
+
+**TODO** Troubleshoot this difference of 1.

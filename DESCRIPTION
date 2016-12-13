@@ -1,0 +1,21 @@
+Package: assmtrepr
+Title: An Attempt at Reproducing Assessment Reports
+Version: 0.0.0.9000
+Authors@R: person("Marianne", "Corvellec",
+                  email = "marianne.corvellec@gmail.com",
+                  role = c("aut", "cre"))
+Description: An attempt at reproducing assessment reports in R. The general
+    context is that of assessing the efficacy of educational programs, such as
+    the Carpentry workshops.
+Depends:
+    R (>= 3.3.1)
+License: BSD_3_clause + file LICENSE
+Encoding: UTF-8
+LazyData: true
+VignetteBuilder: knitr
+Imports:
+    tidyverse
+Suggests:
+    knitr,
+    rmarkdown
+RoxygenNote: 5.0.1
