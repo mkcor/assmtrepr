@@ -1,5 +1,17 @@
+# RStudio files
 .Rproj.user
+
+# History files
 .Rhistory
+
+# Session data files
 .RData
-.Rbuildignore
+
+# TODO Update vignette convention.
+# http://r-pkgs.had.co.nz/inst.html
+# https://github.com/hadley/devtools/issues/1361
 inst/doc
+
+# Produced vignettes
+vignettes/*.html
+vignettes/*.pdf
