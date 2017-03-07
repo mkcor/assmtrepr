@@ -227,11 +227,39 @@ follows the order in which operations are performed:
 postspss %>%      # Take our dataset,
   map(is.na) %>%  # pass it to function map() with argument is.na,
   map(all) %>%    # pass the result to map() with argument all,
-  head()          # and only output the first six elements.
+  head(n = 3)     # and only output the first 3 elements.
 ```
 
-The pipe operator `%>%` comes with the `dplyr` package. Since `names(postspss)`
-is a vector, we would like to get a vector, not a list. Looking up the
+The pipe operator `%>%` comes with the `dplyr` package.
+
+The above output is a list, not a vector. Since `names(postspss)`
+is a vector, we would like to get a logical vector (in order to select readily
+the elements we want to keep). We demonstrate what we mean with a toy example
+below.
+
+```{r}
+vector_of_names <- c("name_1", "name_2", "name_3")
+names_to_keep <- c(name_1 = TRUE, name_2 = FALSE, name_3 = TRUE)
+vector_of_names[names_to_keep]
+```
+
+`names_to_keep` is a named (atomic) vector. Note that the naming is not
+necessary for the above to run.
+
+```{r}
+vector_of_names <- c("name_1", "name_2", "name_3")
+names_to_keep <- c(TRUE, FALSE, TRUE)
+vector_of_names[names_to_keep]
+```
+
+Also note the type of the logical constants `TRUE` and `FALSE`, in R.
+
+```{r}
+typeof(names_to_keep)
+```
+
+How can we get an output of [data structure](http://adv-r.had.co.nz/Data-structures.html) type *vector*? We also
+want its elements to be of type *logical*. Looking up the
 [docs](https://github.com/hadley/purrr#transformation) for `purrr`, we happily
 find the `map_lgl()` function.
 
@@ -240,8 +268,7 @@ empty_col <- postspss %>%
   map(is.na) %>%
   map_lgl(all)
 
-empty_col %>%
-  head()
+empty_col
 ```
 
 Let us check that they are all non-empty:
@@ -250,9 +277,17 @@ Let us check that they are all non-empty:
 which(empty_col)
 ```
 
-As you now know, we could have run `empty_col %>% which()` alternatively. Since
-we do not have empty columns, we will have to wait to showcase
-`postspss %>% select(...)` or `postspss %>% select_(...)` for column selection.
+Alternatively, we could have run `empty_col %>% which()`.
+
+Function `which()` returns the `TRUE` indices of a logical vector. In this case
+there are none. So we do not have any empty column in this tibble.
+
+We can select columns with the well-named `dplyr` function `select()`.
+
+```{r}
+postspss %>%
+  select(I_can_debug, Except_in_Python)
+```
 
 Is there any empty row?
 
