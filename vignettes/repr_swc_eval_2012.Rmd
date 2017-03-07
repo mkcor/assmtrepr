@@ -172,7 +172,7 @@ Let us make all variable names syntactically valid, by calling the following
 function from base R (the `base` package, if you like):
 
 ```{r}
-names(postspss) <- make.names(names(postspss), unique=TRUE)
+names(postspss) <- make.names(names(postspss), unique = TRUE)
 names(postspss)
 ```
 
