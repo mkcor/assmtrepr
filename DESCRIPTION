@@ -1,6 +1,6 @@
 Package: assmtrepr
 Title: An Attempt at Reproducing Assessment Reports
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: person("Marianne", "Corvellec",
                   email = "marianne.corvellec@gmail.com",
                   role = c("aut", "cre"))
