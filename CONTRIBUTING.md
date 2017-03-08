@@ -30,7 +30,24 @@ work-in-progress package:
 
 Indeed, you want to make sure that your changes are free of common problems.
 
-Once you are happy with your contribution, you want to build the package:
+Build the vignettes:
+
+    > devtools::build_vignettes()
+
+You may check that the HTML output renders properly (found in `inst/doc/`).
+
+Once you are happy with your contribution, run
+
+    $ git add vignettes/my_analysis.Rmd
+    $ git commit -m "Add analysis of ..."
+    $ git push origin <your-feature-branch>
+
+and submit a pull request against `upstream master`. Thank you!
+
+## Running your local package [optional]
+
+First, you want to build the (modified, work-in-progress) package. In the R
+console, run
 
     > devtools::build()
 
@@ -41,3 +58,14 @@ library (somewhere *different* from the default R library trees). To check what
 these default libraries are, run
 
     > .libPaths()
+
+If you choose this path (the temporary library) to be, say, `/tmp`, you want to
+run
+
+    $ R CMD INSTALL --library=/tmp assmtrepr_<version_number>.tar.gz
+
+in the shell, from the same location as the tarball.
+
+Finally, start a new R session, and load your newly modified package:
+
+    > library(assmtrepr, lib.loc = "/tmp")
